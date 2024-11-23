@@ -1,9 +1,8 @@
 import React from "react";
 import Footer from "./Footer";
 import Header from "./Header";
-import { Helmet } from "react-helmet"; //used in SEO to manage changes to the document head like the title, meta tags, and links.
-import { Toaster } from "react-hot-toast";//show success or failed in animated
-
+import { Helmet } from "react-helmet";
+import { Toaster } from "react-hot-toast";
 const Layout = ({ children, title, description, keywords, author }) => {
   return (
     <div>
@@ -29,7 +28,7 @@ Layout.defaultProps = {
   title: "Ecommerce app - shop now",
   description: "mern stack project",
   keywords: "mern,react,node,mongodb",
-  author: "Techinfoyt",
+  author: "TechAnil",
 };
 
 export default Layout;

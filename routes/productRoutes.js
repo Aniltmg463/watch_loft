@@ -18,7 +18,6 @@ import {
 import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 import formidable from "express-formidable";
 
-
 const router = express.Router();
 
 //routes

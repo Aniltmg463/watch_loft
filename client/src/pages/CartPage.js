@@ -4,25 +4,25 @@ import { useCart } from "../context/cart";
 import { useAuth } from "../context/auth";
 import { useNavigate } from "react-router-dom";
 import DropIn from "braintree-web-drop-in-react";
+import { AiFillWarning } from "react-icons/ai";
 import axios from "axios";
 import toast from "react-hot-toast";
 import "../styles/CartStyles.css";
 
 const CartPage = () => {
-  const [auth] = useAuth();
+  const [auth, setAuth] = useAuth();
   const [cart, setCart] = useCart();
   const [clientToken, setClientToken] = useState("");
   const [instance, setInstance] = useState("");
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("braintree");
   const navigate = useNavigate();
 
-  // Total price calculation
+  //total price
   const totalPrice = () => {
     try {
       let total = 0;
-      cart?.forEach((item) => {
-        total += item.price;
+      cart?.map((item) => {
+        total = total + item.price;
       });
       return total.toLocaleString("en-US", {
         style: "currency",
@@ -32,8 +32,7 @@ const CartPage = () => {
       console.log(error);
     }
   };
-
-  // Delete item from cart
+  //detele item
   const removeCartItem = (pid) => {
     try {
       let myCart = [...cart];
@@ -46,7 +45,7 @@ const CartPage = () => {
     }
   };
 
-  // Get payment gateway token
+  //get payment gateway token
   const getToken = async () => {
     try {
       const { data } = await axios.get("/api/v1/product/braintree/token");
@@ -55,12 +54,11 @@ const CartPage = () => {
       console.log(error);
     }
   };
-
   useEffect(() => {
     getToken();
   }, [auth?.token]);
 
-  // Handle online payments
+  //handle payments
   const handlePayment = async () => {
     try {
       setLoading(true);
@@ -73,65 +71,34 @@ const CartPage = () => {
       localStorage.removeItem("cart");
       setCart([]);
       navigate("/dashboard/user/orders");
-      toast.success("Payment Completed Successfully");
+      toast.success("Payment Completed Successfully ");
     } catch (error) {
       console.log(error);
       setLoading(false);
     }
   };
-
-  // Handle COD orders
-  const handleCOD = async () => {
-    try {
-      setLoading(true);
-      const orderDetails = {
-        products: cart.map((item) => item._id),
-        buyer: auth.user._id,
-        status: "Not Process",
-      };
-      const { data } = await axios.post(
-        `/api/v1/order/create-cod-order/${auth.user._id}`,
-        orderDetails,
-        {
-          headers: {
-            Authorization: `Bearer ${auth.token}`,
-          },
-        }
-      );
-      setLoading(false);
-      localStorage.removeItem("cart");
-      setCart([]);
-      navigate("/dashboard/user/orders");
-      toast.success("Order placed successfully with Cash on Delivery");
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-      toast.error("Failed to place order. Please try again.");
-    }
-  };
-
   return (
     <Layout>
-      <div className="cart-page">
+      <div className=" cart-page">
         <div className="row">
           <div className="col-md-12">
             <h1 className="text-center bg-light p-2 mb-1">
               {!auth?.user
                 ? "Hello Guest"
-                : `Hello ${auth?.token && auth?.user?.name}`}
+                : `Hello  ${auth?.token && auth?.user?.name}`}
               <p className="text-center">
                 {cart?.length
                   ? `You Have ${cart.length} items in your cart ${
-                      auth?.token ? "" : "please login to checkout!"
+                      auth?.token ? "" : "please login to checkout !"
                     }`
-                  : "Your Cart Is Empty"}
+                  : " Your Cart Is Empty"}
               </p>
             </h1>
           </div>
         </div>
-        <div className="container">
-          <div className="row">
-            <div className="col-md-7 p-0 m-0">
+        <div className="container ">
+          <div className="row ">
+            <div className="col-md-7  p-0 m-0">
               {cart?.map((p) => (
                 <div className="row card flex-row" key={p._id}>
                   <div className="col-md-4">
@@ -146,7 +113,7 @@ const CartPage = () => {
                   <div className="col-md-4">
                     <p>{p.name}</p>
                     <p>{p.description.substring(0, 30)}</p>
-                    <p>Price: {p.price}</p>
+                    <p>Price : {p.price}</p>
                   </div>
                   <div className="col-md-4 cart-remove-btn">
                     <button
@@ -159,11 +126,11 @@ const CartPage = () => {
                 </div>
               ))}
             </div>
-            <div className="col-md-5 cart-summary">
+            <div className="col-md-5 cart-summary ">
               <h2>Cart Summary</h2>
               <p>Total | Checkout | Payment</p>
               <hr />
-              <h4>Total: {totalPrice()}</h4>
+              <h4>Total : {totalPrice()} </h4>
               {auth?.user?.address ? (
                 <>
                   <div className="mb-3">
@@ -195,7 +162,7 @@ const CartPage = () => {
                         })
                       }
                     >
-                      Please Login to checkout
+                      Plase Login to checkout
                     </button>
                   )}
                 </div>
@@ -205,54 +172,20 @@ const CartPage = () => {
                   ""
                 ) : (
                   <>
-                    <div className="payment-method">
-                      <h5>Select Payment Method</h5>
-                      <div>
-                        <input
-                          type="radio"
-                          id="braintree"
-                          name="paymentMethod"
-                          value="braintree"
-                          checked={paymentMethod === "braintree"}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                        />
-                        <label htmlFor="braintree">Credit Card/Paypal</label>
-                      </div>
-                      <div>
-                        <input
-                          type="radio"
-                          id="cod"
-                          name="paymentMethod"
-                          value="cod"
-                          checked={paymentMethod === "cod"}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                        />
-                        <label htmlFor="cod">Cash on Delivery</label>
-                      </div>
-                    </div>
-                    {paymentMethod === "braintree" && (
-                      <DropIn
-                        options={{
-                          authorization: clientToken,
-                          paypal: {
-                            flow: "vault",
-                          },
-                        }}
-                        onInstance={(instance) => setInstance(instance)}
-                      />
-                    )}
+                    <DropIn
+                      options={{
+                        authorization: clientToken,
+                        paypal: {
+                          flow: "vault",
+                        },
+                      }}
+                      onInstance={(instance) => setInstance(instance)}
+                    />
+
                     <button
                       className="btn btn-primary"
-                      onClick={
-                        paymentMethod === "braintree"
-                          ? handlePayment
-                          : handleCOD
-                      }
-                      disabled={
-                        loading ||
-                        (paymentMethod === "braintree" && !instance) ||
-                        !auth?.user?.address
-                      }
+                      onClick={handlePayment}
+                      disabled={loading || !instance || !auth?.user?.address}
                     >
                       {loading ? "Processing ...." : "Make Payment"}
                     </button>
